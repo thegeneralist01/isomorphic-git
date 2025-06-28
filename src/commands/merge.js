@@ -25,6 +25,14 @@ import { mergeTree } from '../utils/mergeTree.js'
  */
 
 /**
+ * @typedef {"ours" | "theirs" | undefined} MergeStrategyOption - A strategy option to pass to the merge algorithm.
+ * Currently only concerned with `ours` and `theirs` options.
+ * - "ours": prefer local changes
+ * - "theirs": prefer incoming changes
+ * - undefined: apply default merge behavior
+ */
+
+/**
  * @param {object} args
  * @param {import('../models/FileSystem.js').FileSystem} args.fs
  * @param {object} args.cache
@@ -51,6 +59,7 @@ import { mergeTree } from '../utils/mergeTree.js'
  * @param {SignCallback} [args.onSign] - a PGP signing implementation
  * @param {MergeDriverCallback} [args.mergeDriver]
  * @param {boolean} args.allowUnrelatedHistories
+ * @param {MergeStrategyOption} [args.strategyOption = undefined] - An optional strategy option to pass to the merge algorithm.
  *
  * @returns {Promise<MergeResult>} Resolves to a description of the merge operation
  *
@@ -74,6 +83,7 @@ export async function _merge({
   onSign,
   mergeDriver,
   allowUnrelatedHistories = false,
+  strategyOption = undefined,
 }) {
   if (ours === undefined) {
     ours = await _currentBranch({ fs, gitdir, fullname: true })
@@ -154,6 +164,7 @@ export async function _merge({
           dryRun,
           abortOnConflict,
           mergeDriver,
+          strategyOption,
         })
       }
     )

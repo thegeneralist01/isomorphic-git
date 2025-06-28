@@ -14,6 +14,14 @@ import { mergeFile } from './mergeFile.js'
 import { modified } from './modified.js'
 
 /**
+ * @typedef {"ours" | "theirs" | undefined} MergeStrategyOption - A strategy option to pass to the merge algorithm.
+ * Currently only concerned with `ours` and `theirs` options.
+ * - "ours": prefer local changes
+ * - "theirs": prefer incoming changes
+ * - undefined: apply default merge behavior
+ */
+
+/**
  * Create a merged tree
  *
  * @param {Object} args
@@ -30,6 +38,7 @@ import { modified } from './modified.js'
  * @param {boolean} [args.dryRun=false]
  * @param {boolean} [args.abortOnConflict=false]
  * @param {MergeDriverCallback} [args.mergeDriver]
+ * @param {MergeStrategyOption} [args.strategyOption = undefined] - An optional strategy option to pass to the merge algorithm.
  *
  * @returns {Promise<string>} - The SHA-1 object id of the merged tree
  *
@@ -49,6 +58,7 @@ export async function mergeTree({
   dryRun = false,
   abortOnConflict = true,
   mergeDriver,
+  strategyOption = undefined,
 }) {
   const ourTree = TREE({ ref: ourOid })
   const baseTree = TREE({ ref: baseOid })
@@ -136,6 +146,23 @@ export async function mergeTree({
           }
 
           // Modifications - both are blobs
+          if (strategyOption !== undefined) {
+            const preferred = strategyOption === 'ours' ? ours : theirs
+
+            // File deleted in preferred. We will keep it deleted,
+              // because we prefer the changes of the preferred side.
+            if (!preferred) return undefined;
+
+            return {
+              mode: await preferred.mode(),
+              path,
+              oid: await preferred.oid(),
+              type: await preferred.type(),
+            }
+          }
+
+
+          // Modifications
           if (
             ours &&
             theirs &&

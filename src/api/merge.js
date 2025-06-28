@@ -21,6 +21,14 @@ import { normalizeCommitterObject } from '../utils/normalizeCommitterObject.js'
  */
 
 /**
+ * @typedef {"ours" | "theirs" | undefined} MergeStrategyOption - A strategy option to pass to the merge algorithm.
+ * Currently only concerned with `ours` and `theirs` options.
+ * - "ours": prefer local changes
+ * - "theirs": prefer incoming changes
+ * - undefined: apply default merge behavior
+ */
+
+/**
  * Merge two branches
  *
  * Currently it will fail if multiple candidate merge bases are found. (It doesn't yet implement the recursive merge strategy.)
@@ -107,6 +115,7 @@ import { normalizeCommitterObject } from '../utils/normalizeCommitterObject.js'
  * @param {object} [args.cache] - a [cache](cache.md) object
  * @param {MergeDriverCallback} [args.mergeDriver] - a [merge driver](mergeDriver.md) implementation
  * @param {boolean} [args.allowUnrelatedHistories = false] - If true, allows merging histories of two branches that started their lives independently.
+ * @param {MergeStrategyOption} [args.strategyOption = undefined] - An optional strategy option to pass to the merge algorithm.
  *
  * @returns {Promise<MergeResult>} Resolves to a description of the merge operation
  * @see MergeResult
@@ -140,6 +149,7 @@ export async function merge({
   cache = {},
   mergeDriver,
   allowUnrelatedHistories = false,
+  strategyOption = undefined,
 }) {
   try {
     assertParameter('fs', _fs)
@@ -182,6 +192,7 @@ export async function merge({
       onSign,
       mergeDriver,
       allowUnrelatedHistories,
+      strategyOption,
     })
   } catch (err) {
     err.caller = 'git.merge'
